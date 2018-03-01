@@ -1,0 +1,320 @@
+---
+title: "Homework 3"
+author: 
+  - Fang, Zheng 
+  - Zhao, Qian
+date: "2018/2/28"
+output: pdf_document
+---
+# 1.
+$$\begin{split}
+Q(\Psi|\Psi^{(k)})&= \sum^n_{i=1}\sum^m_{j=1}p^{(k+1)}_{ij}\{\ln\pi_j+\ln\frac{1}{\sqrt{2\pi}\sigma}+\frac{1}{2\sigma^2}(y_i-x^T_i\beta_j)^2\}\\
+&= \sum^n_{i=1}\sum^m_{j=1}p^{(k+1)}\ln[\pi_j\cdot(2\pi)^{-\frac{1}{2}}]-\frac{1}{2}\sum^n_{i=1}\sum^m_{j=1}p^{(k+1)}\ln\sigma^2-\frac{1}{2}\sum^n_{i=1}\sum^m_{j=1}p^{(k+1)}(y_i-x^T_i\beta_j)^2\cdot\sigma^2
+\end{split}$$
+let
+$$\begin{split}
+I_1&= \sum^n_{i=1}\sum^m_{j=1}p^{(k+1)}\ln[\pi_j\cdot(2\pi)^{-\frac{1}{2}}]\\
+I_2&= \sum^n_{i=1}\sum^m_{j=1}p^{(k+1)}\ln\sigma^2\\
+I_3&= \sum^n_{i=1}\sum^m_{j=1}p^{(k+1)}(y_i-x^T_i\beta_j)^2\cdot\sigma^2
+\end{split}$$
+only $I_3$ contains $\beta_j$, find $\beta_j$ to minimize each $I_{3j}$
+$$\begin{split}
+I_{3j}&= \sum^n_{i=1}p^{(k+1)}(y_i-x^T_i\beta_j)^2\cdot\sigma^2\\
+\frac{dI_{3j}}{d{\beta_j}}&= \sum^n_{i=1}p^{(k+1)}\sigma^2(-2x_iy_i+2x_ix^T_i\beta_j))=0\\
+&\sum^n_{i=1}p^{(k+1)}x_ix^T_i\beta_j= \sum^n_{i=1}p^{(k+1)}x_iy_i\\
+\beta^{(k+1)}&= (\sum^n_{i=1}p^{(k+1)}x_ix^T_i)^{-1}(\sum^n_{i=1}x_ip^{(k+1)}y_i),  j=1,...,m
+\end{split}$$
+only $I_2$ and $I_3$ contain $\sigma^2$,
+$$\begin{split}
+\frac{d(I_2+I_3)}{d\sigma^2}&= \sum^n_{i=1}\sum^m_{j=1}p^{(k+1)}\sigma^{-2}-\sum^n_{i=1}\sum^m_{j=1}p^{(k+1)}(y_i-x^T_i\beta_j)^2(\sigma^{-2})^{-2}=0\\
+n\sigma^2&-\sum^n_{i=1}\sum^m_{j=1}p^{(k+1)}(y_i-x^T_i\beta_j)^2=0\\
+\sigma^{2(k+1)}&= \frac{\sum^n_{i=1}\sum^m_{j=1}p^{(k+1)}(y_i-x^T_i\beta_j)^2}{n}
+\end{split}$$
+only $I_1$ contains $\pi_j$ to minimize each $\pi_j$
+$$\begin{split}
+\frac{dI_1}{d\pi_j}&= \sum^n_{i=1}p^{(k+1)}{ij}\frac{1}{\pi_j}=0\\
+\pi_j&= \frac{1}{n}\sum^n_{i=1}p^{(k+1)}
+\end{split}$$
+
+# 2.
+## (a)
+$$\begin{split}
+C\int^{+\infty}_0(2x^{\theta-1}+x^{\theta-\frac{1}{2}})e^{-x}dx&= 1\\
+C\int^{+\infty}_0[\Gamma(\theta)\cdot2\cdot(\frac{e^{-x}x^{\theta-1}}{\Gamma(\theta)})+\Gamma(\theta+\frac{1}{2})(\frac{e^{-x}x^{\theta-\frac{1}{2}}}{\Gamma(\theta+\frac{1}{2})})]dx&= 1\\
+C[2\Gamma(\theta)\int^{+\infty}_0\frac{e^{-x}x^{\theta-1}}{\Gamma(\theta)}dx+\Gamma(\theta+\frac{1}{2})\int^{+\infty}_0\frac{e^{-x}x^{\theta-\frac{1}{2}}}{\Gamma(\theta+\frac{1}{2})})dx]&= 1\\
+C[2\Gamma(\theta)+\Gamma(\theta+\frac{1}{2})]&= 1\\
+C= \frac{1}{2\Gamma(\theta)+\Gamma(\theta+\frac{1}{2})}
+\end{split}$$
+
+## (b)
+$\theta$ can be any positive number, for example $\theta=3$,
+```{r}
+# get pdf g(x)
+g <- function(x){
+  return(C*(2*x^(theta - 1) + x^(theta - 0.5))*exp(-x))
+}
+# get cdf G(x)
+G <- function(x){
+  return(integrate(g, 0, x)$value)
+}
+# get invsese cdf
+InverseG <- function(y){
+  return(uniroot(function(x) G(x) - y, lower = 0, upper = 20, tol = 1e-9)$root)
+}
+
+# let theta = 3
+theta <- 3
+C <- 1/(2*gamma(theta)+gamma(theta + 0.5))
+n <- 10000
+# 
+y <- runif(n, 0, 1)
+x <- sapply(y, InverseG)
+hist(x, ylim = c(0, 0.25), prob = TRUE)
+curve(g(x), add = TRUE, col="blue")
+```
+
+
+## (c)
+$$\begin{split}
+q(x)= &\ \sqrt{4+x}\cdot x^{\theta-1}e^{-x}\\
+g(x)= &\ C(2x^{\theta-1}+x^{\theta-\frac{1}{2}})e^{-x}\\
+\frac{q(x)}{\alpha g(x)}= &\ \frac{\sqrt{4+x}}{\alpha C(2+\sqrt{x})}\leq1\\
+&\ \frac{\sqrt{4+x}}{C(2+\sqrt{x})}\leq\alpha\\
+\alpha= &\ \sup\frac{\sqrt{4+x}}{C(2+\sqrt{x})}= \frac{1}{C}\\
+\therefore\frac{q(x)}{\alpha g(x)}= &\ \frac{\sqrt{4+x}}{2+\sqrt{x}}
+\end{split}$$
+```{r}
+# rejection sampling
+RejectionS <- function(x){
+  frac <- (4 + x)^0.5/(2 + x^0.5)
+  if(frac<1){
+    return(x)
+  }
+}
+fx <- sapply(x, RejectionS)
+hist(fx, ylim = c(0, 0.25),prob = TRUE)
+```
+
+
+
+
+# 3.
+## (a)
+For $0<x<1$
+$$\begin{split}\frac{1}{1+x^2}&\leq 1 \\ \sqrt{2+x^2} &\leq \sqrt{3}\\
+f(x)=\cfrac{x^{\theta-1}}{1+x^2}+\sqrt{2+x^2}\cdot (1-x)^{\beta-1} &< x^{\theta -1}+\sqrt{3}\cdot (1-x)^{\beta-1}\end{split}$$
+and let U ~ Unif(0.1), Observe that for any $\theta, \beta > 0$,  
+let $U^{1/a}$ ~ $Beta(a,1)$, and $1 - U^{1/b}$ ~ $Beta(1,b)$
+with the densities of the distributions of 
+$$\begin{split}g_\theta(x)&= \theta x^{\theta-1} \\ g_\beta(x)&= \beta (1-x)^{\beta-1}\end{split}$$
+let 
+$$g(x)=(1-\lambda)g_\theta(x) + \lambda g_\beta(x)$$
+here we choice $\lambda = \frac{1}{2}$ to simplify our computation
+since
+$$f(x)< x^{\theta-1}+\sqrt{3}\cdot (1-x)^{\beta-1}$$
+then to get $f(x)<\alpha g(x)$ we must have
+$$\alpha g(x)=\alpha\cdot \cfrac{1}{2}\cdot \theta\cdot x^{\theta-1}+\alpha\cdot \cfrac{1}{2}\cdot \beta\cdot (1-x)^{\beta-1}\geq x^{\theta-1}+\sqrt{3}\cdot (1-x)^{\beta-1}$$ 
+which equals to
+$$1\leq \cfrac{1}{2}\cdot \alpha\cdot\theta$$
+
+$$\sqrt{3}\leq \cfrac{1}{2}\cdot \alpha\cdot\beta$$
+therefore
+$$\alpha = max(\frac{2}{\theta},\frac{2\sqrt{3}}{\beta}) $$
+and here we set $(\theta,\beta)=(2,6)$
+so we get $\alpha = 1$
+```{R}
+#you can change the value of theta and beta
+theta_factor <- 2
+beta_factor <- 6
+# W1 <- (C1^2) / (C1 + C2)#weight for g1(x)
+# W2 <- (C2^2) / (C1 + C2)#weight for g2(x)
+W1 <- 1/2#weight for g1(x)
+W2 <- 1/2#weight for g2(x)
+alpha_factor <- max(2/theta_factor, 2/beta_factor)
+
+#pdf of g(x)
+func_g1 <- function(x){ 
+  g1 <- theta_factor * (x ^ (theta_factor-1))
+  return(g1)
+}
+
+func_g2 <- function(x){ 
+  g2 <- (beta_factor) * ((1-x)^(beta_factor-1))
+  return(g2)
+}
+
+func_g_mix <- function(x){ 
+  g1 <- func_g1(x)
+  g2 <- func_g2(x)
+  return(W1*g1+W2*g2)
+}
+# x <- seq(from = 0, to = 1, by = 0.001)
+# cdf_g <- c()
+# for(i in 1:length(x)){
+#   cdf_g <- c(cdf_g, integrate(func_g, lower = 0, upper = x[i])$value)
+# }
+# #g_value <- sapply(x,func_g)
+# plot(cdf_g~x,type = "l", xlab = "x", ylab = "density")
+#calculate the inverse of g-unit(1)
+inverse_function <- function(x){
+  #u <- runif(1)
+  cdf_g <- integrate(func_g, lower = 0, upper = x)$value
+  inverse_value <- cdf_g - u
+  return(inverse_value)
+}
+
+#pdf of f
+func_f <- function(x){
+  f1 <- (x ^ (theta_factor-1)) / (1+x^2)
+  f2 <- ((2+x^2)^0.5) * ((1-x)^(beta_factor - 1))
+  return(f1+f2)
+}
+func_f_true <- function(x){
+  value <- func_f(x) * const
+  return(value)
+}
+#solve for the constant for f_pdf
+integrate(func_f, lower = 0, upper = 1)$value
+const <- 1/integrate(func_f, lower = 0, upper = 1)$value
+#true value of f_pdf
+x <- seq(from = 0, to = 1, by = 0.001)
+f_value <- sapply(x,func_f_true)
+
+f_sample_rejection <-c() 
+while(length(f_sample_rejection)<10000){
+  u_weight <- runif(1)
+  if(u_weight < 0.5){
+    u <- runif(1)
+    func_g <- func_g1
+    sample_value <- uniroot(inverse_function,interval = c(0,1))$root
+  }
+  else{
+    u <- runif(1)
+    func_g <- func_g2
+    sample_value <- uniroot(inverse_function,interval = c(0,1))$root
+  }
+  sample_value_g <- func_g_mix(sample_value) 
+  sample_value_f <- func_f(sample_value)
+  ratio <- sample_value_f / (alpha_factor * sample_value_g)
+  rejection_value <- runif(1)
+  if(ratio >= rejection_value){
+    f_sample_rejection <- c(f_sample_rejection, sample_value)
+  }
+}
+
+sample_pdf <- density(f_sample_rejection)
+
+#plot the true density and the sample density in one figure
+plot(f_value~x,type = "l",col = "red")
+lines(sample_pdf,type = "l", xlab = "x", ylab = "density", main = "using rejection method to get sample from f")
+legend(0.6,4.5,c("sample density", "true density of f"), col = c("black","red"),text.col = c("black","red"),lty = c(1,1))
+# str(f_sample_rejection)
+# max(f_sample_rejection)
+
+```
+
+## (b)
+Now we dealing with the two components of f(x)
+$$\begin{split}f_1(x)&=\cfrac{x^{\theta-1}}{1+x^2}\\ f_2(x)&=\sqrt{2+x^2}\cdot (1-x)^{\beta-1}\end{split} $$
+and still we have
+$$\frac{1}{1+x^2}\leq 1 \\ \sqrt{2+x^2} \leq \sqrt{3}$$
+so when $$(\alpha_1, \alpha_2) = (\frac{1}{\theta}, \frac{\sqrt{3}}{\beta})$$
+$$\alpha_1 g_1(x) \geq f_1(x) \\\alpha_2 g_2(x) \geq f_2(x) $$
+and still we use $(\theta,\beta)=(2,6)$
+so we got $(\alpha_1, \alpha_2) = (\frac{1}{2}, \frac{\sqrt{3}}{6})$
+ when $Unif(0,1) > \frac{\alpha_1}{\alpha_1 + \alpha_2}= \frac{3-\sqrt{3}}{2}$ we sample from $g_2(x)$ otherwise we sample from $g_1(x)$ 
+```{R}
+#you can change the value of theta and beta
+theta_factor <- 2
+beta_factor <- 6
+alpha_1 <- 1 / theta_factor
+alpha_2 <- (3^0.5) / beta_factor
+
+weight_boundary <-alpha_1 / (alpha_1 + alpha_2) 
+#pdf of g(x)
+func_g1 <- function(x){ 
+  g1 <- theta_factor * (x ^ (theta_factor-1))
+  return(g1)
+}
+func_g2 <- function(x){ 
+  g2 <- (beta_factor) * ((1-x)^(beta_factor-1))
+  return(g2)
+}
+
+# x <- seq(from = 0, to = 1, by = 0.001)
+# cdf_g <- c()
+# for(i in 1:length(x)){
+#   cdf_g <- c(cdf_g, integrate(func_g, lower = 0, upper = x[i])$value)
+# }
+# #g_value <- sapply(x,func_g)
+# plot(cdf_g~x,type = "l", xlab = "x", ylab = "density")
+#calculate the inverse of g-unit(1)
+inverse_function <- function(x){
+  cdf_g <- integrate(func_g, lower = 0, upper = x)$value
+  inverse_value <- cdf_g - u
+  return(inverse_value)
+}
+##--------------Q3-b-----------------------
+#pdf of f
+func_f1 <- function(x){
+  f1 <- (x ^ (theta_factor-1)) / (1+x^2)
+  return(f1)
+}
+
+func_f2 <- function(x){
+  f2 <- ((2+x^2)^0.5) * ((1-x)^(beta_factor - 1))
+  return(f2)
+}
+func_f <- function(x){
+  f1 <- func_f1(x)
+  f2 <- func_f2(x)
+  return(f1+f2)
+}
+integrate(func_f, lower = 0, upper = 1)$value
+const <- 1/integrate(func_f, lower = 0, upper = 1)$value
+
+func_f_true <- function(x){
+  value <- func_f(x) * const
+  return(value)
+}
+#solve for the constant for f_pdf
+
+#true value of f_pdf
+x <- seq(from = 0, to = 1, by = 0.001)
+f_value <- sapply(x,func_f_true)
+f_sample_rejection <-c() 
+while(length(f_sample_rejection)<10000){
+  random_weight <- runif(1)
+  if(random_weight > weight_boundary){
+    u <- runif(1)
+    func_g <- func_g2
+    sample_value <- uniroot(inverse_function,interval = c(0,1))$root
+    sample_value_g <- func_g2(sample_value) 
+    sample_value_f <- func_f2(sample_value)
+    ratio <- sample_value_f / (alpha_2 * sample_value_g)
+  }
+  else{
+    u <- runif(1)
+    func_g <- func_g1
+    sample_value <- uniroot(inverse_function,interval = c(0,1))$root
+    sample_value_g <- func_g1(sample_value) 
+    sample_value_f <- func_f1(sample_value)
+    ratio <- sample_value_f / (alpha_1 * sample_value_g)
+  }
+  rejection_value <- runif(1)
+  if(ratio >= rejection_value){
+    f_sample_rejection <- c(f_sample_rejection, sample_value)
+  }
+}
+
+sample_pdf <- density(f_sample_rejection)
+
+#plot the true density and the sample density in one figure
+plot(f_value~x,type = "l",col = "red")
+lines(sample_pdf,type = "l", xlab = "x", ylab = "density", main = "using rejection method to get sample from f")
+legend(0.6,2.3,c("sample density", "true density of f"), col = c("black","red"),text.col = c("black","red"),lty = c(1,1))
+# str(f_sample_rejection)
+# max(f_sample_rejection)
+
+```
+
